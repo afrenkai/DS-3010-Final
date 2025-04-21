@@ -1,13 +1,11 @@
-from consts import DATADIR, NAME, SUBSET
-from datasets import load_dataset, Dataset, load_from_disk
+import pandas as pd
+from sklearn.model_selection import train_test_split
+def split(df: pd.DataFrame, test_size:float=0.2, val_size: float=0.5) -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
 
-
-def split(ds: Dataset, test_size:float=0.2, val_size: float=0.5) -> (Dataset, Dataset, Dataset):
-
-    og_len = len(ds['Run1'])
+    og_len = len(df['Run1 (ms)'])
     print(f' Len of original dataset: {og_len}')
-    ds_train, ds_test = ds.train_test_split(test_size=test_size).values()
-    ds_test, ds_val = ds_test.train_test_split(test_size=val_size).values()
+    ds_train, ds_test = train_test_split(df, test_size = test_size)
+    ds_test, ds_val = train_test_split(ds_test, test_size=val_size)
 
     assert len(ds_train) == 0.8 * og_len
     assert len(ds_val) == 0.1 * og_len
@@ -17,14 +15,14 @@ def split(ds: Dataset, test_size:float=0.2, val_size: float=0.5) -> (Dataset, Da
 
     return ds_train, ds_val, ds_test
 
-def save(ds: Dataset, dir, name, subset, split):
-    ds.save_to_disk(f'{dir}/{name}-{subset}-{split}')
+def save(ds: pd.DataFrame, split):
+    ds.to_csv(f'Data/SGEMM_{split}.csv', index = False)
 
 
 if __name__ == "__main__":
-    ds = load_from_disk(f'{DATADIR}/{NAME}-{SUBSET}')
-
+    ds = pd.read_csv('sgemm_product.csv')
+    print(ds.head())
     train_ds, val_ds, test_ds = split(ds)
-    save(train_ds, DATADIR, NAME, SUBSET, 'train')
-    save(val_ds, DATADIR, NAME, SUBSET, 'val')
-    save(test_ds, DATADIR, NAME, SUBSET, 'test')
+    save(train_ds, 'train')
+    save(val_ds,  'val')
+    save(test_ds,  'test')
